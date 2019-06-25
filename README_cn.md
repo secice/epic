@@ -1,26 +1,30 @@
 ## 简介
 
-Epic是一个在虚拟机层面、以Java Method为粒度的 **运行时** AOP Hook框架。简单来说，Epic 就是ART上的 [Dexposed](https://github.com/alibaba/dexposed) 。它可以拦截本进程内部几乎任意的Java方法调用，可用于实现AOP编程、运行时插桩、性能分析、安全审计等。
+Epic 是一个在虚拟机层面、以 Java Method 为粒度的 **运行时** AOP Hook 框架。简单来说，Epic 就是 ART 上的 [Dexposed](https://github.com/alibaba/dexposed)（支持 Android 4.0 ~ 10.0）。它可以拦截本进程内部几乎任意的 Java 方法调用，可用于实现 AOP 编程、运行时插桩、性能分析、安全审计等。
 
-关于Epic的实现原理，可以参考 [本文](http://weishu.me/2017/11/23/dexposed-on-art/)。
+Epic 被 [VirtualXposed](https://github.com/android-hacker/VirtualXposed) 以及 [太极](https://www.coolapk.com/apk/me.weishu.exp) 使用，用来实现非 Root 场景下的 Xposed 功能，已经经过了相当广泛的验证。
+
+关于 Epic 的实现原理，可以参考 [本文](http://weishu.me/2017/11/23/dexposed-on-art/)。
 
 ## 使用
 
 ### 添加依赖
 
-在你项目的build.gradle 中添加如下依赖（jcenter仓库):
+在你项目的 build.gradle 中添加如下依赖（jcenter 仓库):
 
 ```groovy
 dependencies {
-    compile 'me.weishu:epic:0.2.8'
+    compile 'me.weishu:epic:0.3.6'
 }
 ```
 
 然后就可以使用了。
 
+> 新版本的 Epic 并未开源，0.3.6 版本对于简单的个人使用场景已经足够了；如果你需要新版本的 Epic （更好地兼容 Android 8.0, 9.0, 10.0 上的支持等），请联系我 (twsxtd@gmail.com)。在 0.17.0 版本之后，其稳定性已经非常卓越。
+
 ### 几个例子
 
-1. 监控Java线程的创建和销毁：
+1. 监控 Java 线程的创建和销毁：
 
 ```java
 class ThreadMethodHook extends XC_MethodHook{
@@ -55,11 +59,11 @@ DexposedBridge.hookAllConstructors(Thread.class, new XC_MethodHook() {
 DexposedBridge.findAndHookMethod(Thread.class, "run", new ThreadMethodHook());
 ```
 
-以上代码拦截了 `Thread` 类以及 `Thread` 类所有子类的 `run`方法，在 `run` 方法开始执行和退出的时候进行拦截，就可以知道进程内部所有Java线程创建和销毁的时机；更进一步，你可以结合Systrace等工具，来生成整个过程的执行流程图，比如：
+以上代码拦截了 `Thread` 类以及 `Thread` 类所有子类的 `run`方法，在 `run` 方法开始执行和退出的时候进行拦截，就可以知道进程内部所有 Java 线程创建和销毁的时机；更进一步，你可以结合 Systrace 等工具，来生成整个过程的执行流程图，比如：
 
 <img src="http://7xp3xc.com1.z0.glb.clouddn.com/201601/1511840542774.png" width="480"/>
 
-2. 监控dex文件的加载：
+2. 监控 dex 文件的加载：
 
 ```java
 DexposedBridge.findAndHookMethod(DexFile.class, "loadDex", String.class, String.class, int.class, new XC_MethodHook() {
@@ -75,9 +79,9 @@ DexposedBridge.findAndHookMethod(DexFile.class, "loadDex", String.class, String.
 
 ## 支持情况
 
-目前Epic支持 Android 5.0~ 8.1 的 Thumb2/ARM64指令集；Android O的支持正在计划中，x86/mips/arm32的支持后续也会完成。但是，本项目没有经过任何线上产品的验证，无法保证足够的稳定性；目前仅仅是个人用途（主要是性能分析），欢迎给我提 issue :)
+目前 Epic 支持 Android 4.0 ~ 10.0 的 Thumb-2/ARM64 指令集。本项目被 [VirtualXposed](https://github.com/android-hacker/VirtualXposed) 和 [太极](http://taichi.cool) 使用，经过了数百万用户的验证，已经被证明非常稳定。目前，手机 QQ 已经在产品中使用 Epic。
 
-Android版本支持情况：
+Android 版本支持情况：
 
 Runtime | Android Version | Support
 ------  | --------------- | --------
@@ -92,30 +96,24 @@ ART     | N (7.0)         | Yes
 ART     | N MR1 (7.1)     | Yes
 ART     | O (8.0)         | Yes
 ART     | O MR1(8.1)      | Yes
+ART     | P (9.0)         | Yes
+ART     | Q (10.0 beta)   | Yes
 
 指令集支持情况：
 
 Runtime  | Arch         | Support
 -------- | ------------ | --------
 Dalvik   | All          | Yes
-ART      | Thumb2       | Yes
+ART      | Thumb-2       | Yes
 ART      | ARM64        | Yes
-ART      | ARM32        | No
+ART      | ARM32        | Yes
 ART      | x86/x86_64   | No
 ART      | mips         | No
 
 ## 已知问题
 
-1. 受限于inline hook本身，短方法 (Thum2下指令小于8个字节，ARM64小于16字节) 无法支持。
+1. 受限于 inline hook 本身，短方法 (Thumb-2 下指令小于 8 个字节，ARM64 小于 16 字节) 无法支持。
 2. 被完全内联的方法不支持。
-3. 在支持硬浮点的CPU架构(如armeabi-v7a, arm64-v8a)上，参数包含 double/float 的方法支持可能有问题，还没有进行充分地测试。
-4. Android L 的 arm64 暂不支持。
-
-## 支持和加入Epic
-
-目前Epic仅仅在 Android 5.0, 5.1, 6.0, 7.0, 7.1, 8.0, 8.1 的个别机型上进行过测试，没有经过大范围的测试，因此很多机型没有覆盖到；欢迎帮助进行兼容性测试，有能力的欢迎贡献代码 :)
-
-你可以拿出你手头的手机，然后clone本项目到本地，然后build其中的 app 模块，安装这个测试APP到你的手机上，点击一下其中的按钮，如果提示有 「测试不通过」，或者有直接闪退的情况，请把Issue砸向我，不胜感激 ^_^ 
 
 ## 致谢
 
@@ -125,8 +123,6 @@ ART      | mips         | No
 4. [Nougat_dlfunctions](https://github.com/avs333/Nougat_dlfunctions.git)
 
 
-## 交流和讨论
+## 联系我
 
 twsxtd@gmail.com
-
-[交流群](https://gitter.im/android-hacker/epic?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge) 

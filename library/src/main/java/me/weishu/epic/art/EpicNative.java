@@ -16,9 +16,13 @@
 
 package me.weishu.epic.art;
 
+import android.util.Log;
+
+import com.taobao.android.dexposed.DeviceCheck;
 import com.taobao.android.dexposed.XposedHelpers;
 import com.taobao.android.dexposed.utility.Debug;
 import com.taobao.android.dexposed.utility.Logger;
+import com.taobao.android.dexposed.utility.Unsafe;
 
 import java.lang.reflect.Member;
 
@@ -27,8 +31,16 @@ import static com.taobao.android.dexposed.utility.Debug.addrHex;
 
 public final class EpicNative {
 
+    private static final String TAG = "EpicNative";
+    private static volatile boolean useUnsafe = false;
     static {
-        System.loadLibrary("epic");
+        try {
+            System.loadLibrary("epic");
+            useUnsafe = DeviceCheck.isYunOS() || !isGetObjectAvailable();
+            Log.i(TAG, "use unsafe ? " + useUnsafe);
+        } catch (Throwable e) {
+            Log.e(TAG, "init EpicNative error", e);
+        }
     }
 
     public static native long mmap(int length);
@@ -49,7 +61,17 @@ public final class EpicNative {
 
     public static native long malloc(int sizeOfPtr);
 
-    public static native Object getObject(long self, long address);
+    public static native Object getObjectNative(long self, long address);
+
+    private static native boolean isGetObjectAvailable();
+
+    public static Object getObject(long self, long address) {
+        if (useUnsafe) {
+            return Unsafe.getObject(address);
+        } else {
+            return getObjectNative(self, address);
+        }
+    }
 
     public static native boolean compileMethod(Member method, long self);
 
@@ -80,6 +102,9 @@ public final class EpicNative {
      */
     public static native void startJit(long cookie);
 
+    // FIXME: 17/12/29 reimplement it with pure native code.
+    static native boolean activateNative(long jumpToAddress, long pc, long sizeOfTargetJump, long sizeOfBridgeJump, byte[] code);
+
     /**
      * Disable the moving gc of runtime.
      * Warning: Just for experiment Do not call this now!!!
@@ -87,7 +112,6 @@ public final class EpicNative {
      */
     public static native void disableMovingGc(int api);
 
-    private static final String TAG = "EpicNative";
 
     private EpicNative() {
     }
@@ -137,6 +161,7 @@ public final class EpicNative {
         Logger.d(TAG, "Copy " + length + " bytes form " + addrHex(src) + " to " + addrHex(dst));
         memcpy(src, dst, length);
     }
+
 }
 
 

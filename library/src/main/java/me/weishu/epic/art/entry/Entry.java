@@ -121,7 +121,7 @@ public class Entry {
     //endregion
 
     private static Object referenceBridge(int r1, int self, int struct) {
-        Logger.w(TAG, "enter bridge function.");
+        Logger.i(TAG, "enter bridge function.");
 
         // struct {
         //     void* sp;
@@ -147,7 +147,7 @@ public class Entry {
         Logger.d(TAG, "r3:" + Debug.hexdump(r3, 0));
 
         final int sourceMethod = ByteBuffer.wrap(EpicNative.get(struct + 12, 4)).order(ByteOrder.LITTLE_ENDIAN).getInt();
-        Logger.i(TAG, "sourceMethod:" + Long.toHexString(sourceMethod));
+        Logger.i(TAG, "sourceMethod:" + Integer.toHexString(sourceMethod));
 
         Epic.MethodInfo originMethodInfo = Epic.getMethodInfo(sourceMethod);
         Logger.i(TAG, "originMethodInfo :" + originMethodInfo);
@@ -161,7 +161,7 @@ public class Entry {
         Class<?> returnType = originMethodInfo.returnType;
         Object artMethod = originMethodInfo.method;
 
-        Logger.w(TAG, "leave bridge function");
+        Logger.i(TAG, "leave bridge function");
 
         if (returnType == void.class) {
             onHookVoid(artMethod, receiver, arguments);
