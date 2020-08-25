@@ -2,13 +2,12 @@ package me.weishu.epic.samples.tests.arguments;
 
 import android.util.Log;
 
-import com.taobao.android.dexposed.DexposedBridge;
-import com.taobao.android.dexposed.XposedHelpers;
-
 import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.Random;
 
+import de.robv.android.xposed.DexposedBridge;
+import de.robv.android.xposed.XposedHelpers;
 import me.weishu.epic.samples.tests.LogMethodHook;
 import me.weishu.epic.samples.tests.TestCase;
 
@@ -55,6 +54,7 @@ public abstract class AbsArgStaticCase extends TestCase {
     @Override
     public boolean predicate() {
         long[] arguments = getArguments();
+        Log.i(TAG, "call arguments: " + Arrays.toString(toHex(arguments)));
 
         makeCall(arguments);
 
@@ -64,7 +64,6 @@ public abstract class AbsArgStaticCase extends TestCase {
         for (int i = 0; i < length; i++) {
             if (arguments[i] != args[i]) {
                 ret = false;
-                Log.i(TAG, "call arguments: " + Arrays.toString(toHex(arguments)));
                 Log.i(TAG, "hooked arguments: " + Arrays.toString(toHex(args)));
             }
         }

@@ -19,7 +19,7 @@ package me.weishu.epic.art.entry;
 import android.os.Build;
 import android.util.Pair;
 
-import com.taobao.android.dexposed.DexposedBridge;
+import de.robv.android.xposed.DexposedBridge;
 import com.taobao.android.dexposed.utility.Debug;
 import com.taobao.android.dexposed.utility.Logger;
 
@@ -380,7 +380,7 @@ public class Entry {
             } else if (type == double.class) {
                 return byteBuffer.getDouble();
             } else if (type == boolean.class) {
-                return byteBuffer.getInt() == 0;
+                return byteBuffer.getInt() != 0;
             } else {
                 throw new RuntimeException("unknown type:" + type);
             }
